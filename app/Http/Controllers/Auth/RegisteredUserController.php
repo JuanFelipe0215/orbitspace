@@ -34,6 +34,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'blog_slug' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:tenants,id'],
         ]);
 
         $user = User::create([
@@ -42,8 +43,13 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        // Crear el tenant automáticamente al registrarse
+        $tenant = \App\Models\Tenant::create(['id' => $request->blog_slug]);
+        $tenant->domains()->create([
+            'domain' => $request->blog_slug . '.' . config('app.central_domain'),
+        ]);
 
+        event(new Registered($user));
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));

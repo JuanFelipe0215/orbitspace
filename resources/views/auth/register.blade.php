@@ -9,6 +9,14 @@
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
+        <!-- Blog Slug -->
+        <div class="mt-4">
+            <x-input-label for="blog_slug" :value="__('Nombre de tu blog (sin espacios)')" />
+            <x-text-input id="blog_slug" class="block mt-1 w-full" type="text" name="blog_slug" :value="old('blog_slug')" required autofocus autocomplete="off" />
+            <x-input-error :messages="$errors->get('blog_slug')" class="mt-2" />
+            <p class="text-sm text-gray-500 mt-1">Este será tu subdominio: <strong>tu-slug.central.test</strong></p>
+        </div>
+
         <!-- Email Address -->
         <div class="mt-4">
             <x-input-label for="email" :value="__('Email')" />
