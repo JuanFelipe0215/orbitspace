@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Stancl\Tenancy\Contracts\TenantCouldNotBeIdentifiedException;
+use Stancl\Tenancy\Resolvers\DomainTenantResolver;
 
 class LoginRequest extends FormRequest
 {
@@ -29,20 +31,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // Inicializar tenant manualmente si no está inicializado
-        if (!tenancy()->initialized) {
-            $domain = $this->getHost();
-            $tenant = \Stancl\Tenancy\Database\Models\Domain::where('domain', $domain)
-                ->first()
-                ?->tenant;
-
-            if ($tenant) {
-                tenancy()->initialize($tenant);
-            }
-        }
-
-        \Log::info('Tenancy initialized: ' . (tenancy()->initialized ? 'true' : 'false'));
-        \Log::info('BD durante auth: ' . \DB::connection()->getDatabaseName());
+        $this->ensureTenancyInitialized();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
@@ -53,6 +42,32 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    private function ensureTenancyInitialized(): void
+    {
+        if (tenancy()->initialized) {
+            return;
+        }
+
+        $host = $this->getHost();
+
+        if (in_array($host, config('tenancy.central_domains', []))) {
+            return;
+        }
+
+        try {
+            // InitializeTenancyByDomain should have already run via middleware.
+            // This is a safety fallback in case it didn't (e.g. guard cached before middleware ran).
+            tenancy()->initialize(
+                app(DomainTenantResolver::class)->resolve($host)
+            );
+            // AuthTenancyBootstrapper calls forgetGuards() automatically via the
+            // TenancyInitialized event, so Auth::attempt() below will get a fresh guard
+            // pointed at the tenant DB.
+        } catch (TenantCouldNotBeIdentifiedException) {
+            // Unknown domain — Auth::attempt() will simply fail with auth.failed.
+        }
     }
 
     public function ensureIsNotRateLimited(): void

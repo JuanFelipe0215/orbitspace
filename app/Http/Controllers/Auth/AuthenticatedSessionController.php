@@ -28,6 +28,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $tenant = tenant();
+        $domain = $tenant ? $tenant->domains->first()->domain : null;
+
+        if ($domain) {
+            return redirect()->intended('http://' . $domain . ':8000/posts');
+        }
+
         return redirect()->intended('/posts');
     }
 
