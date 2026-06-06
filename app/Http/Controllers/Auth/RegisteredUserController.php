@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Models\Tenant;
 
 class RegisteredUserController extends Controller
 {
@@ -32,10 +33,20 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'blog_slug' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:tenants,id'],
         ]);
+
+        // Crear tenant y subdominio primero (en BD central)
+        $tenant = Tenant::create(['id' => $request->blog_slug]);
+        $tenant->domains()->create([
+            'domain' => $request->blog_slug . '.' . config('app.central_domain'),
+        ]);
+
+        // Cambiar al contexto del tenant para crear el usuario en su BD
+        tenancy()->initialize($tenant);
+        Auth::forgetGuards();
 
         $user = User::create([
             'name' => $request->name,
@@ -43,15 +54,15 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Crear el tenant automáticamente al registrarse
-        $tenant = \App\Models\Tenant::create(['id' => $request->blog_slug]);
-        $tenant->domains()->create([
-            'domain' => $request->blog_slug . '.' . config('app.central_domain'),
-        ]);
-
         event(new Registered($user));
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Redirigir al subdominio del tenant
+        $domain = $tenant->domains->first()->domain;
+        $port = $request->getPort();
+        $scheme = $request->getScheme();
+        $suffix = ($port == 80 || $port == 443) ? '' : ":$port";
+
+        return redirect()->away("{$scheme}://{$domain}{$suffix}");
     }
 }

@@ -1,8 +1,6 @@
-<?php
+    <?php
 
-use App\View\Providers\AppServiceProvider;
-
-return [
-    AppServiceProvider::class,
-    \App\View\Providers\TenancyServiceProvider::class,
-];
+    return [
+        App\Providers\AppServiceProvider::class,
+        App\Providers\TenancyServiceProvider::class,
+    ];
