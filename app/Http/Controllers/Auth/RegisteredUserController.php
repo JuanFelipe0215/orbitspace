@@ -63,6 +63,6 @@ class RegisteredUserController extends Controller
         $scheme = $request->getScheme();
         $suffix = ($port == 80 || $port == 443) ? '' : ":$port";
 
-        return redirect()->away("{$scheme}://{$domain}{$suffix}");
+        return redirect()->away("{$scheme}://{$domain}{$suffix}/posts");
     }
 }

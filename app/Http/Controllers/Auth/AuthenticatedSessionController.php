@@ -28,8 +28,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         if (tenancy()->initialized) {
-            $domain = tenant()->domains->first()->domain;
-            return redirect('http://' . $domain . ':8000/posts');
+            return redirect('/posts');
         }
 
         return redirect()->intended('/dashboard');
