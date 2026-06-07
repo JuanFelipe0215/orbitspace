@@ -12,10 +12,16 @@ foreach (config('tenancy.central_domains') as $domain) {
         });
 
         Route::middleware('auth')->group(function () {
-            
+
             Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        });
+
+        Route::prefix('admin')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AdminController::class, 'index'])->name('admin.index');
+            Route::patch('/{id}/suspend', [\App\Http\Controllers\Admin\AdminController::class, 'suspend'])->name('admin.suspend');
+            Route::patch('/{id}/unsuspend', [\App\Http\Controllers\Admin\AdminController::class, 'unsuspend'])->name('admin.unsuspend');
         });
 
         require __DIR__.'/auth.php';
