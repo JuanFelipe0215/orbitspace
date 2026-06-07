@@ -10,6 +10,17 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     {{ __("You're logged in!") }}
+
+                    <div class="mt-6 flex gap-4">
+                        <a href="/posts"
+                           class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            Mis Posts
+                        </a>
+                        <a href="/blog-settings"
+                           class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                            Personalizar Blog
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

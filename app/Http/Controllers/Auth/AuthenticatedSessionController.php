@@ -25,17 +25,15 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
-        $tenant = tenant();
-        $domain = $tenant ? $tenant->domains->first()->domain : null;
 
-        if ($domain) {
-            return redirect()->intended('http://' . $domain . ':8000/posts');
+        if (tenancy()->initialized) {
+            $domain = tenant()->domains->first()->domain;
+            return redirect('http://' . $domain . ':8000/posts');
         }
 
-        return redirect()->intended('/posts');
+        return redirect()->intended('/dashboard');
     }
 
     /**
