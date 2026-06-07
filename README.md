@@ -324,8 +324,4 @@ $tenant->suspended; // true
 $tenant->data['suspended'];
 ```
 
----
 
-## License
-
-This project is open-sourced under the [MIT license](LICENSE).
